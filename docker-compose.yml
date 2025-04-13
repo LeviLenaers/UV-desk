@@ -1,0 +1,43 @@
+networks:
+  public:
+    name: proxy
+    external: false
+
+volumes:
+  app:
+  mysql:
+
+services:
+  uvdesk:
+    image: dietermartens/uvdesk
+    environment:
+      # installation in dev, change it after installation to prod
+      - APP_ENV=prod
+      - APP_SECRET=
+      - TZ=Europe/Brussels
+      - APP_TIMEZONE=Europe/Brussels
+      - APP_CURRENCY=EUR
+      - CRON_USER1=root
+      - CRON_SCHEDULE1=*/5 * * * *
+      - CRON_COMMAND1=cd /var/www/html && php bin/console uvdesk:refresh-mailbox info@domain.tld support@domain.tld
+    restart: always
+    extra_hosts:
+      - "{uvdesk.domain.tld}:127.0.0.1"
+    ports:
+      - 80:80
+    networks:
+      - public
+    volumes:
+      - app:/var/www/html
+    links:
+      - db
+
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootPassword
+    networks:
+      - public
+    volumes:
+      - mysql:/var/lib/mysql
